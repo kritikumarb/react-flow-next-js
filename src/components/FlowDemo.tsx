@@ -15,6 +15,7 @@ import ReactFlow, {
   Handle,
   Position,
 } from 'reactflow';
+import { useSearchParams } from 'next/navigation';
 import 'reactflow/dist/style.css';
 
 const CustomNode = ({ data, id }: { data: any; id: string }) => {
@@ -177,7 +178,49 @@ const initialEdges: Edge[] = [
 ];
 
 export default function FlowDemo() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes.map(node => ({
+  const searchParams = useSearchParams();
+  
+  // Parse nodes from query parameters (array of strings)
+  const getNodesFromQuery = useCallback(() => {
+    const nodeParams = searchParams.get('nodes');
+    if (!nodeParams) return initialNodes;
+
+    try {
+      const nodeLabels = JSON.parse(decodeURIComponent(nodeParams));
+      if (!Array.isArray(nodeLabels)) return initialNodes;
+
+      return nodeLabels.map((label: string, index: number) => ({
+        id: (index + 1).toString(),
+        type: 'custom',
+        data: {
+          label: label,
+          color: '#ff6b6b',
+          onRemove: (id: string) => {
+            setNodes(nodes => nodes.filter(node => node.id !== id));
+            setEdges(edges => edges.filter(edge => edge.source !== id && edge.target !== id));
+          },
+          onLabelChange: (id: string, newLabel: string) => {
+            setNodes(nodes => 
+              nodes.map(node => 
+                node.id === id 
+                  ? { ...node, data: { ...node.data, label: newLabel } }
+                  : node
+              )
+            );
+          }
+        },
+        position: { 
+          x: 200 + (index * 100), 
+          y: 100 + (index * 50)  // Arrange nodes in a diagonal pattern
+        },
+      }));
+    } catch (error) {
+      console.error('Error parsing nodes from query:', error);
+      return initialNodes;
+    }
+  }, [searchParams]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(getNodesFromQuery().map(node => ({
     ...node,
     data: {
       ...node.data,
