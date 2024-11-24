@@ -11,7 +11,7 @@ This project demonstrates how to use React Flow with Next.js, creating interacti
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
+git clone https://github.com/kritikumarb/react-flow-next-js.git
 cd react-flow-next-js
 ```
 
